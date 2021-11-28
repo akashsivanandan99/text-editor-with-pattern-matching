@@ -14,6 +14,7 @@ public class Notepad extends JFrame implements ActionListener {
     JScrollPane pane;
     String text;
     String parentText;
+    public  boolean dark = false;
     Notepad(){
         setBounds(0, 0, 1950, 1050);
 
@@ -112,12 +113,29 @@ public class Notepad extends JFrame implements ActionListener {
         help.add(about);
 
 
+
+
+        JMenu view = new JMenu ("View");
+
+        JMenuItem darkMode = new JMenuItem("Dark Mode");
+        darkMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        darkMode.addActionListener(this);
+
+        JMenuItem lightMode = new JMenuItem("Light Mode");
+        lightMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+        lightMode.addActionListener(this);
+
+        view.add(darkMode);
+        view.add(lightMode);
+
         //Adding the File, Edit and Help menus to the menu bar
         menuBar.add(file);
         menuBar.add(edit);
+        menuBar.add(view);
         menuBar.add(help);
 
         setJMenuBar(menuBar);
+
 
         area = new JTextArea();
 
@@ -142,7 +160,25 @@ public class Notepad extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
 
 
-        if (e.getActionCommand().equals("New")){
+        if( e.getActionCommand().equals("Dark Mode")){
+
+
+
+
+                Color bgcolour = new Color(45, 42, 46);
+                area.setBackground(bgcolour);
+                area.setForeground(Color.white);
+                area.setCaretColor(Color.yellow);
+                dark = true;
+                // menuBar.setBackground(Color.darkGray);
+
+        }
+        else if(e.getActionCommand().equals("Light Mode")){
+            area.setBackground(Color.WHITE);
+            area.setForeground(Color.BLACK);
+            area.setCaretColor(Color.BLACK);
+        }
+        else if (e.getActionCommand().equals("New")){
             area.setText("");
         }
 
@@ -150,7 +186,6 @@ public class Notepad extends JFrame implements ActionListener {
         else if (e.getActionCommand().equals("Open")){
             JFileChooser openChooser = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt", "text");
-            area.setBackground(Color.darkGray);
             openChooser.setFileFilter(filter);
             openChooser.setApproveButtonText("Open");
 
