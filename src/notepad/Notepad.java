@@ -7,18 +7,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import notepad.BoyerMoore;
+import notepad.RabinKarp;
 
 public class Notepad extends JFrame implements ActionListener {
     JTextArea area;
     JScrollPane pane;
     String text;
-    String parentText;
+
+    public ArrayList<Integer> positions = new ArrayList<>();
+    public int currentPos;
     public  boolean dark = false;
+    public int caretPos;
     Notepad(){
         setBounds(0, 0, 1950, 1050);
 
-        //Declaring a JMenuBar object
         JMenuBar menuBar = new JMenuBar();
 
 
@@ -26,30 +34,24 @@ public class Notepad extends JFrame implements ActionListener {
         UIManager.put("MenuBar.background", Color.black );
         menuBar.setBackground(menuColor);
 
-        //Creating the File menu in the menu bar
         JMenu file = new JMenu("File");
 
-        //Creating the new file option in the file menu and adding an action listener
         JMenuItem newdoc = new JMenuItem("New");
         newdoc.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         newdoc.addActionListener(this);
 
-        //Creating the open file option in the file menu and adding an action listener
         JMenuItem open = new JMenuItem("Open");
         open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         open.addActionListener(this);
 
-        //Creating the save file option in the file menu and adding an action listener
         JMenuItem save = new JMenuItem("Save");
         save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         save.addActionListener(this);
 
-        //Creating the print option in the file menu
         JMenuItem print = new JMenuItem("Print");
         print.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         print.addActionListener(this);
 
-        //Creating the exit application option in the file menu
         JMenuItem exit = new JMenuItem("Exit");
         exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
         exit.addActionListener(this);
@@ -57,7 +59,6 @@ public class Notepad extends JFrame implements ActionListener {
 
 
 
-        //Adding the menu items to the file menu
         file.add(newdoc);
         file.add(open);
         file.add(save);
@@ -65,58 +66,46 @@ public class Notepad extends JFrame implements ActionListener {
         file.add(exit);
 
 
-        //Creating the edit menu in the menu bar
         JMenu edit = new JMenu("Edit");
 
-        //Creating the copy option in the Edit menu
         JMenuItem copy = new JMenuItem("Copy");
         copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         copy.addActionListener(this);
 
-        //Creating the paste option in the edit menu
         JMenuItem paste = new JMenuItem("Paste");
         paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         paste.addActionListener(this);
 
-        //Creating the cut option in the edit menu
         JMenuItem cut = new JMenuItem("Cut");
         cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         cut.addActionListener(this);
 
-        //Creating the select all option in the edit menu
         JMenuItem selectAll = new JMenuItem("Select All");
         selectAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         selectAll.addActionListener(this);
 
-        //Creating the find text option in the edit menu
         JMenuItem find = new JMenuItem("Find Text");
         find.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         find.addActionListener(this);
 
 
-        //Adding the menu items to the edit menu
         edit.add(copy);
         edit.add(paste);
         edit.add(cut);
         edit.add(selectAll);
         edit.add(find);
 
-
-        //Creating a help menu
         JMenu help = new JMenu("Help");
 
-        //Creating the about us option in the help menu
         JMenuItem about = new JMenuItem("About Notify");
         about.addActionListener(this);
 
-        //Adding the menu item to the help menu
         help.add(about);
-
-
 
 
         JMenu view = new JMenu ("View");
 
+        //Creating the dark mode option ih the view menu
         JMenuItem darkMode = new JMenuItem("Dark Mode");
         darkMode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
         darkMode.addActionListener(this);
@@ -128,17 +117,18 @@ public class Notepad extends JFrame implements ActionListener {
         view.add(darkMode);
         view.add(lightMode);
 
-        //Adding the File, Edit and Help menus to the menu bar
+        //Adding the File, Edit, View and Help menus to the menu bar
         menuBar.add(file);
         menuBar.add(edit);
         menuBar.add(view);
         menuBar.add(help);
 
+
+
         setJMenuBar(menuBar);
 
 
         area = new JTextArea();
-
 
         area.setFont(new Font("SAN_SERIF", Font.PLAIN, 20));
         area.setLineWrap(true);
@@ -170,7 +160,6 @@ public class Notepad extends JFrame implements ActionListener {
                 area.setForeground(Color.white);
                 area.setCaretColor(Color.yellow);
                 dark = true;
-                // menuBar.setBackground(Color.darkGray);
 
         }
         else if(e.getActionCommand().equals("Light Mode")){
@@ -184,7 +173,7 @@ public class Notepad extends JFrame implements ActionListener {
 
 
         else if (e.getActionCommand().equals("Open")){
-            JFileChooser openChooser = new JFileChooser();
+        JFileChooser openChooser = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt", "text");
             openChooser.setFileFilter(filter);
             openChooser.setApproveButtonText("Open");
@@ -248,20 +237,144 @@ public class Notepad extends JFrame implements ActionListener {
             area.selectAll();
         }
         else if(e.getActionCommand().equals("Find Text")){
-            String searchText = JOptionPane.showInputDialog(this,
-                    "Enter text to be searched", null);
-            if (searchText != null && (searchText.length() > 0)){
-                parentText = area.getText();
-                BoyerMoore bm = new BoyerMoore();
-                int position = bm.findPattern(parentText, searchText);
-                area.setCaretPosition(position);
+            
+            JFrame searchFrame = new JFrame();
+            JPanel searchPanel = new JPanel();
+            searchFrame.setLocationRelativeTo(this);
+            JTextField searchBar = new JTextField();
+            JLabel searchLabel = new JLabel("Find");
+            JTextField replaceBar = new JTextField();
+            JLabel replaceLabel = new JLabel("Replace");
+            JButton okButton = new JButton("Go");
+            JButton replaceButton = new JButton("Replace");
 
-            }
-            System.out.println("No input");
+            //   Adding an action listener to the replace button
+            replaceButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String parentText = area.getText();
+                    String searchText = searchBar.getText();
+                    String replaceText = replaceBar.getText();
+                    if (replaceText != null && (replaceText.length() > 0) && !positions.isEmpty()) {
+                        String newString =parentText.replaceFirst(Pattern.quote(searchText),
+                                Matcher.quoteReplacement(replaceText));
+                        area.setText(newString);
+                        area.setCaretPosition(caretPos);
+                        positions = RabinKarp.search(searchText, newString, 101);
+                        currentPos = 0;
+                        System.out.println("\n\n New position");
+                        System.out.println(Arrays.toString(positions.toArray()));
+
+                    }
+                }
+            });
+            JButton replaceAllButton = new JButton("Replace all");
+            replaceAllButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String temp = "";
+                    String parentText = area.getText();
+                    String searchText = searchBar.getText();
+                    String replaceText = replaceBar.getText();
+                    if (replaceText != null && (replaceText.length()  > 0 )){
+
+                        temp = parentText.replace(searchText, replaceText);
+                        area.setText(temp);
+                        area.setCaretPosition(caretPos);
+                        positions = RabinKarp.search(searchText, temp, 101);
+                        currentPos = 0;
+
+                    }
+                }
+            });
+
+            //   Adding an action listener to the find button
+            okButton.addActionListener( new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Find button triggered");
+                   String searchText = searchBar.getText();
+                   System.out.println("Search text: " + searchText);
+                   boolean listChecker = positions.isEmpty();
+                   if(!listChecker) {
+                       positions.clear();
+                       System.out.println("\n\n Cleared arraylist \n\n");
+                   }
+                    if (searchText != null && (searchText.length() > 0)){
+                        String parentText = area.getText();
+                        positions.addAll(RabinKarp.search(searchText, parentText, 101));
+//                        test.setText(Arrays.toString(positions.toArray()));
+                        caretPos = positions.get(0);
+                        area.setCaretPosition(caretPos);
+                        currentPos = 0;
+
+
+
+                    }
+                }
+            });
+            JButton previousButton = new JButton("Previous");
+            previousButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (currentPos > 0){
+                        caretPos = positions.get(currentPos-1);
+                        currentPos -= 1;
+                        area.setCaretPosition(caretPos);
+                        System.out.println("Current position: " + currentPos);
+                    }
+                }
+            });
+            JButton nextButton = new JButton("Next");
+            nextButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String newText = searchBar.getText();
+//                    if(searchText == newText)
+                    if (currentPos < positions.size() - 1){
+                        caretPos = positions.get(currentPos + 1);
+                        currentPos += 1;
+                        area.setCaretPosition(caretPos);
+                        System.out.println("Curent position: " + currentPos);
+                    }
+                }
+            });
+            searchFrame.setSize(400, 250);
+            searchFrame.setLayout(null);
+            searchFrame.add(searchPanel);
+
+            searchPanel.setLayout(null);
+            searchPanel.setBounds(0, 0, 400, 250);
+            searchPanel.add(searchBar);
+
+            searchBar.setBounds(90, 60, 250, 30);
+            searchPanel.add(searchLabel);
+            searchLabel.setBounds(40, 60, 50, 30);
+            searchPanel.add(replaceBar);
+
+            replaceBar.setBounds(90, 100, 250, 30);
+            searchPanel.add(replaceLabel);
+            replaceLabel.setBounds(40, 100, 50, 30);
+
+            searchPanel.add(okButton);
+            okButton.setBounds(80, 130, 80, 30);
+            searchPanel.add(replaceButton);
+
+            replaceButton.setBounds(180, 130, 80, 30);
+            searchPanel.add(replaceAllButton);
+            replaceAllButton.setBounds(280, 130, 100, 30);
+
+            searchPanel.add(previousButton);
+            previousButton.setBounds(100, 180, 80, 30);
+            searchPanel.add(nextButton);
+
+            nextButton.setBounds(260, 180, 80, 30);
+            searchFrame.setVisible(true);
+
+
         }
 
         else if(e.getActionCommand().equals("About the notepad")){
-//            new About.setVisible(true);
             //TODO finish this
             System.out.println("Work in progress");
         }
